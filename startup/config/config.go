@@ -11,7 +11,7 @@ type Config struct {
 
 func NewConfig() *Config {
 	return &Config{
-		Port:          "8003",
+		Port:          "8004",
 		Neo4jPort:     "7687",
 		Neo4jHost:     "localhost",
 		Neo4jProtocol: "bolt",

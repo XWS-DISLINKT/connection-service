@@ -52,7 +52,7 @@ func (service *ConnectionService) InsertUser(user *domain.User) (bool, error) {
 	return successful.(bool), err
 }
 
-func (service *ConnectionService) MakeConnectionWithPublicProfile(requestSenderId string, requestReceiverId string) (bool, error) {
+func (service *ConnectionService) MakeConnectionWithPublicProfile(requestSenderId string, requestReceiverId string) (string, error) {
 	session := service.databaseDriver.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close()
 	successful, err := session.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
@@ -72,10 +72,11 @@ func (service *ConnectionService) MakeConnectionWithPublicProfile(requestSenderI
 
 		return nil, result.Err()
 	})
-	return successful.(bool), err
+	print(successful.(bool))
+	return "", err
 }
 
-func (service *ConnectionService) MakeConnectionRequest(requestSenderId string, requestReceiverId string) (bool, error) {
+func (service *ConnectionService) MakeConnectionRequest(requestSenderId string, requestReceiverId string) (string, error) {
 	session := service.databaseDriver.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close()
 	successful, err := session.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
@@ -94,7 +95,8 @@ func (service *ConnectionService) MakeConnectionRequest(requestSenderId string, 
 
 		return nil, result.Err()
 	})
-	return successful.(bool), err
+	print(successful.(bool))
+	return "", err
 }
 
 func (service *ConnectionService) ApproveConnectionRequest(requestSenderId string, requestReceiverId string) (bool, error) {
