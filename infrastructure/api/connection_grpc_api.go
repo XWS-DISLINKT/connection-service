@@ -31,6 +31,32 @@ func (handler *ConnectionHandler) MakeConnectionWithPublicProfile(ctx context.Co
 	return response, nil
 }
 
+func (handler *ConnectionHandler) MakeConnectionRequest(ctx context.Context, request *pb.ConnectionRequest) (*pb.ConnectionResponse, error) {
+	requestSenderId := request.ConnectionBody.GetRequestSenderId()
+	requestReceiverId := request.ConnectionBody.GetRequestReceiverId()
+	success, err := handler.service.MakeConnectionRequest(requestSenderId, requestReceiverId)
+	response := &pb.ConnectionResponse{
+		Success: success,
+	}
+	if err != nil {
+		return response, err
+	}
+	return response, nil
+}
+
+func (handler *ConnectionHandler) ApproveConnectionRequest(ctx context.Context, request *pb.ConnectionRequest) (*pb.ConnectionResponse, error) {
+	requestSenderId := request.ConnectionBody.GetRequestSenderId()
+	requestReceiverId := request.ConnectionBody.GetRequestReceiverId()
+	success, err := handler.service.ApproveConnectionRequest(requestSenderId, requestReceiverId)
+	response := &pb.ConnectionResponse{
+		Success: success,
+	}
+	if err != nil {
+		return response, err
+	}
+	return response, nil
+}
+
 func (handler *ConnectionHandler) Demo() {
 	user1 := domain.User{Id: "1", IsPrivate: false}
 	user2 := domain.User{Id: "2", IsPrivate: false}
