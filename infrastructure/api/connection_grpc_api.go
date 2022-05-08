@@ -18,6 +18,12 @@ func NewConnectionHandler(service *application.ConnectionService) *ConnectionHan
 		service: service,
 	}
 }
+func (handler *ConnectionHandler) InsertUser(ctx context.Context, request *pb.User) (*pb.Status, error) {
+	user := domain.User{Id: request.UserId, IsPrivate: request.IsPrivate}
+	success, err := handler.service.InsertUser(&user)
+	response := &pb.Status{Success: success}
+	return response, err
+}
 
 func (handler *ConnectionHandler) MakeConnectionWithPublicProfile(ctx context.Context, request *pb.ConnectionRequest) (*pb.ConnectionResponse, error) {
 	requestSenderId := request.ConnectionBody.GetRequestSenderId()
