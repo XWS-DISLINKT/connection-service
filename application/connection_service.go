@@ -121,7 +121,7 @@ func (service *ConnectionService) ApproveConnectionRequest(requestSenderId strin
 			return result.Record().Values[0], nil
 		}
 
-		return nil, result.Err()
+		return false, result.Err()
 	})
 	return successful.(bool), err
 }
