@@ -59,58 +59,59 @@ func (service *ConnectionService) InsertUser(user *domain.User) (bool, error) {
 func (service *ConnectionService) MakeConnectionWithPublicProfile(requestSenderId string, requestReceiverId string) (bool, error) {
 	session := service.databaseDriver.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close()
-	senderExists, err := service.checkIfExists(requestSenderId)
-	receiverExists, err := service.checkIfExists(requestReceiverId)
-	if senderExists && receiverExists {
-		successful, err := session.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-			result, err := transaction.Run(
-				"match(u1:User{id: $requestSenderId}) match(u2:User{id: $requestReceiverId, isPrivate: false})"+
-					" create (u1)-[c1:CONNECTS{isApproved: true}]->(u2)"+
-					" create (u1)<-[c2:CONNECTS{isApproved: true}]-(u2)"+
-					" return c1 is not null",
-				map[string]interface{}{"requestSenderId": requestSenderId, "requestReceiverId": requestReceiverId})
-			if err != nil {
-				return nil, err
-			}
+	canMakeConnection, err := service.canMakeConnection(requestSenderId, requestReceiverId)
 
-			if result.Next() {
-				return result.Record().Values[0], nil
-			}
-
-			return nil, result.Err()
-		})
-		return successful.(bool), err
-	} else {
+	if !canMakeConnection {
 		return false, err
 	}
+
+	successful, err := session.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		result, err := transaction.Run(
+			"match(u1:User{id: $requestSenderId}) match(u2:User{id: $requestReceiverId})"+
+				" create (u1)-[c1:CONNECTS{isApproved: true}]->(u2)"+
+				" create (u1)<-[c2:CONNECTS{isApproved: true}]-(u2)"+
+				" return c1 is not null",
+			map[string]interface{}{"requestSenderId": requestSenderId, "requestReceiverId": requestReceiverId})
+		if err != nil {
+			return nil, err
+		}
+
+		if result.Next() {
+			return result.Record().Values[0], nil
+		}
+
+		return nil, result.Err()
+	})
+	return successful.(bool), err
 }
 
 func (service *ConnectionService) MakeConnectionRequest(requestSenderId string, requestReceiverId string) (bool, error) {
 	session := service.databaseDriver.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close()
-	senderExists, err := service.checkIfExists(requestSenderId)
-	receiverExists, err := service.checkIfExists(requestReceiverId)
-	if senderExists && receiverExists {
-		successful, err := session.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
-			result, err := transaction.Run(
-				"match(u1:User{id: $requestSenderId}) match(u2:User{id: $requestReceiverId, isPrivate: true})"+
-					" create (u1)-[c1:CONNECTS{isApproved: false}]->(u2)"+
-					" create (u1)<-[c2:CONNECTS{isApproved: false}]-(u2) return c1 is not null",
-				map[string]interface{}{"requestSenderId": requestSenderId, "requestReceiverId": requestReceiverId})
-			if err != nil {
-				return nil, err
-			}
 
-			if result.Next() {
-				return result.Record().Values[0], nil
-			}
+	canMakeConnection, err := service.canMakeConnection(requestSenderId, requestReceiverId)
 
-			return nil, result.Err()
-		})
-		return successful.(bool), err
-	} else {
+	if !canMakeConnection {
 		return false, err
 	}
+
+	successful, err := session.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		result, err := transaction.Run(
+			"match(u1:User{id: $requestSenderId}) match(u2:User{id: $requestReceiverId})"+
+				" create (u1)-[c1:CONNECTS{isApproved: false}]->(u2)"+
+				" create (u1)<-[c2:CONNECTS{isApproved: false}]-(u2) return c1 is not null",
+			map[string]interface{}{"requestSenderId": requestSenderId, "requestReceiverId": requestReceiverId})
+		if err != nil {
+			return nil, err
+		}
+
+		if result.Next() {
+			return result.Record().Values[0], nil
+		}
+
+		return nil, result.Err()
+	})
+	return successful.(bool), err
 }
 
 func (service *ConnectionService) ApproveConnectionRequest(requestSenderId string, requestReceiverId string) (bool, error) {
@@ -200,15 +201,13 @@ func (service *ConnectionService) GetRequestsUsernamesFor(userId string) ([]stri
 	return connections.(Users).users, err
 }
 
-func (service *ConnectionService) checkIfExists(userId string) (bool, error) {
+func (service *ConnectionService) canMakeConnection(requestSenderId string, requestReceiverId string) (bool, error) {
 	session := service.databaseDriver.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close()
 	success, err := session.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
 		result, err := transaction.Run(
-			"match(u:User) "+
-				"where u.id = $userId "+
-				"return u.id is not null",
-			map[string]interface{}{"userId": userId})
+			"optional match(u1:User{id: $requestSenderId}) optional match(u2:User{id: $requestReceiverId}) optional match((u1)-[c1:CONNECTS]->(u2)) return u1 is not null and u2 is not null and c1 is null",
+			map[string]interface{}{"requestSenderId": requestSenderId, "requestReceiverId": requestReceiverId})
 		if err != nil {
 			return false, err
 		}
