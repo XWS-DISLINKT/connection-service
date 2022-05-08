@@ -25,9 +25,9 @@ func (handler *ConnectionHandler) InsertUser(ctx context.Context, request *pb.Us
 	return response, err
 }
 
-func (handler *ConnectionHandler) MakeConnectionWithPublicProfile(ctx context.Context, request *pb.ConnectionRequest) (*pb.ConnectionResponse, error) {
-	requestSenderId := request.ConnectionBody.GetRequestSenderId()
-	requestReceiverId := request.ConnectionBody.GetRequestReceiverId()
+func (handler *ConnectionHandler) MakeConnectionWithPublicProfile(ctx context.Context, request *pb.ConnectionBody) (*pb.ConnectionResponse, error) {
+	requestSenderId := request.GetRequestSenderId()
+	requestReceiverId := request.GetRequestReceiverId()
 	success, err := handler.service.MakeConnectionWithPublicProfile(requestSenderId, requestReceiverId)
 	response := &pb.ConnectionResponse{
 		Success: success,
@@ -39,9 +39,9 @@ func (handler *ConnectionHandler) MakeConnectionWithPublicProfile(ctx context.Co
 	return response, nil
 }
 
-func (handler *ConnectionHandler) MakeConnectionRequest(ctx context.Context, request *pb.ConnectionRequest) (*pb.ConnectionResponse, error) {
-	requestSenderId := request.ConnectionBody.GetRequestSenderId()
-	requestReceiverId := request.ConnectionBody.GetRequestReceiverId()
+func (handler *ConnectionHandler) MakeConnectionRequest(ctx context.Context, request *pb.ConnectionBody) (*pb.ConnectionResponse, error) {
+	requestSenderId := request.GetRequestSenderId()
+	requestReceiverId := request.GetRequestReceiverId()
 	success, err := handler.service.MakeConnectionRequest(requestSenderId, requestReceiverId)
 	response := &pb.ConnectionResponse{
 		Success: success,
@@ -53,9 +53,9 @@ func (handler *ConnectionHandler) MakeConnectionRequest(ctx context.Context, req
 	return response, nil
 }
 
-func (handler *ConnectionHandler) ApproveConnectionRequest(ctx context.Context, request *pb.ConnectionRequest) (*pb.ConnectionResponse, error) {
-	requestSenderId := request.ConnectionBody.GetRequestSenderId()
-	requestReceiverId := request.ConnectionBody.GetRequestReceiverId()
+func (handler *ConnectionHandler) ApproveConnectionRequest(ctx context.Context, request *pb.ConnectionBody) (*pb.ConnectionResponse, error) {
+	requestSenderId := request.GetRequestSenderId()
+	requestReceiverId := request.GetRequestReceiverId()
 	success, err := handler.service.ApproveConnectionRequest(requestSenderId, requestReceiverId)
 	response := &pb.ConnectionResponse{
 		Success: success,
