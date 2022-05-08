@@ -18,10 +18,16 @@ func NewConnectionHandler(service *application.ConnectionService) *ConnectionHan
 		service: service,
 	}
 }
+func (handler *ConnectionHandler) InsertUser(ctx context.Context, request *pb.User) (*pb.Status, error) {
+	user := domain.User{Id: request.UserId, IsPrivate: request.IsPrivate}
+	success, err := handler.service.InsertUser(&user)
+	response := &pb.Status{Success: success}
+	return response, err
+}
 
-func (handler *ConnectionHandler) MakeConnectionWithPublicProfile(ctx context.Context, request *pb.ConnectionRequest) (*pb.ConnectionResponse, error) {
-	requestSenderId := request.ConnectionBody.GetRequestSenderId()
-	requestReceiverId := request.ConnectionBody.GetRequestReceiverId()
+func (handler *ConnectionHandler) MakeConnectionWithPublicProfile(ctx context.Context, request *pb.ConnectionBody) (*pb.ConnectionResponse, error) {
+	requestSenderId := request.GetRequestSenderId()
+	requestReceiverId := request.GetRequestReceiverId()
 	success, err := handler.service.MakeConnectionWithPublicProfile(requestSenderId, requestReceiverId)
 	response := &pb.ConnectionResponse{
 		Success: success,
@@ -33,9 +39,9 @@ func (handler *ConnectionHandler) MakeConnectionWithPublicProfile(ctx context.Co
 	return response, nil
 }
 
-func (handler *ConnectionHandler) MakeConnectionRequest(ctx context.Context, request *pb.ConnectionRequest) (*pb.ConnectionResponse, error) {
-	requestSenderId := request.ConnectionBody.GetRequestSenderId()
-	requestReceiverId := request.ConnectionBody.GetRequestReceiverId()
+func (handler *ConnectionHandler) MakeConnectionRequest(ctx context.Context, request *pb.ConnectionBody) (*pb.ConnectionResponse, error) {
+	requestSenderId := request.GetRequestSenderId()
+	requestReceiverId := request.GetRequestReceiverId()
 	success, err := handler.service.MakeConnectionRequest(requestSenderId, requestReceiverId)
 	response := &pb.ConnectionResponse{
 		Success: success,
@@ -47,9 +53,9 @@ func (handler *ConnectionHandler) MakeConnectionRequest(ctx context.Context, req
 	return response, nil
 }
 
-func (handler *ConnectionHandler) ApproveConnectionRequest(ctx context.Context, request *pb.ConnectionRequest) (*pb.ConnectionResponse, error) {
-	requestSenderId := request.ConnectionBody.GetRequestSenderId()
-	requestReceiverId := request.ConnectionBody.GetRequestReceiverId()
+func (handler *ConnectionHandler) ApproveConnectionRequest(ctx context.Context, request *pb.ConnectionBody) (*pb.ConnectionResponse, error) {
+	requestSenderId := request.GetRequestSenderId()
+	requestReceiverId := request.GetRequestReceiverId()
 	success, err := handler.service.ApproveConnectionRequest(requestSenderId, requestReceiverId)
 	response := &pb.ConnectionResponse{
 		Success: success,
@@ -96,11 +102,11 @@ func (handler *ConnectionHandler) GetRequestsUsernamesFor(ctx context.Context, r
 }
 
 func (handler *ConnectionHandler) Demo() {
-	user1 := domain.User{Id: "1", IsPrivate: false}
-	user2 := domain.User{Id: "2", IsPrivate: false}
-	user3 := domain.User{Id: "3", IsPrivate: true}
-	user4 := domain.User{Id: "4", IsPrivate: true}
-	user5 := domain.User{Id: "5", IsPrivate: true}
+	user1 := domain.User{Id: "623b0cc3a34d25d8567f9f84", IsPrivate: false}
+	user2 := domain.User{Id: "623b0cc3a34d25d8567f9f85", IsPrivate: false}
+	user3 := domain.User{Id: "623b0cc3a34d25d8567f9f86", IsPrivate: true}
+	user4 := domain.User{Id: "623b0cc3a34d25d8567f9f87", IsPrivate: true}
+	user5 := domain.User{Id: "623b0cc3a34d25d8567f9f88", IsPrivate: true}
 	handler.service.DeleteEverything()
 	handler.service.InsertUser(&user1)
 	handler.service.InsertUser(&user2)
@@ -110,6 +116,7 @@ func (handler *ConnectionHandler) Demo() {
 	handler.service.MakeConnectionWithPublicProfile(user1.Id, user2.Id)
 	handler.service.MakeConnectionRequest(user3.Id, user4.Id)
 	handler.service.ApproveConnectionRequest(user3.Id, user4.Id)
+	handler.service.MakeConnectionWithPublicProfile(user3.Id, user2.Id)
 	handler.service.MakeConnectionRequest(user1.Id, user4.Id)
 	connections, _ := handler.service.GetConnectionsUsernamesFor(user1.Id)
 	requests, _ := handler.service.GetRequestsUsernamesFor(user1.Id)

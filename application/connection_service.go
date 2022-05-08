@@ -15,6 +15,10 @@ func NewConnectionService() *ConnectionService {
 	if err != nil {
 		panic(err)
 	}
+	err = databaseDriver.VerifyConnectivity()
+	if err != nil {
+		panic(err)
+	}
 	return &ConnectionService{
 		databaseDriver: databaseDriver,
 	}
