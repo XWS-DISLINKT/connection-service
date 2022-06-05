@@ -102,9 +102,9 @@ func (handler *ConnectionHandler) GetRequestsUsernamesFor(ctx context.Context, r
 }
 
 func (handler *ConnectionHandler) Demo() {
-	user1 := domain.User{Id: "623b0cc3a34d25d8567f9f84", IsPrivate: false}
-	user2 := domain.User{Id: "623b0cc3a34d25d8567f9f85", IsPrivate: false}
-	user3 := domain.User{Id: "623b0cc3a34d25d8567f9f86", IsPrivate: true}
+	user1 := domain.User{Id: "623b0cc3a34d25d8567f9f82", IsPrivate: false}
+	user2 := domain.User{Id: "623b0cc3a34d25d8567f9f83", IsPrivate: false}
+	user3 := domain.User{Id: "623b0cc3a34d25d8567f9f84", IsPrivate: false}
 	user4 := domain.User{Id: "623b0cc3a34d25d8567f9f87", IsPrivate: true}
 	user5 := domain.User{Id: "623b0cc3a34d25d8567f9f88", IsPrivate: true}
 	handler.service.DeleteEverything()
