@@ -19,12 +19,12 @@ func NewConfig() *Config {
 		fmt.Println("docker")
 
 		return &Config{
-			Port:          "8000",
-			Neo4jPort:     "7687",
-			Neo4jHost:     "connection-db",
-			Neo4jProtocol: "bolt",
-			Neo4jUsername: "neo4j",
-			Neo4jPassword: "neo4j",
+			Port:          os.Getenv("CONNECTION_SERVICE_PORT"),
+			Neo4jPort:     os.Getenv("CONNECTION_DB_PORT"),
+			Neo4jHost:     os.Getenv("CONNECTION_DB_HOST"),
+			Neo4jProtocol: os.Getenv("CONNECTION_DB_PROTOCOL"),
+			Neo4jUsername: os.Getenv("CONNECTION_DB_USERNAME"),
+			Neo4jPassword: os.Getenv("CONNECTION_DB_PASSWORD"),
 		}
 	} else {
 		fmt.Println("local")
