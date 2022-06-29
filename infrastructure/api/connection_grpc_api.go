@@ -84,6 +84,23 @@ func (handler *ConnectionHandler) GetConnectionsUsernamesFor(ctx context.Context
 	return response, nil
 }
 
+func (handler *ConnectionHandler) GetSuggestionIdsFor(ctx context.Context, request *pb.GetSuggestionIdsRequest) (*pb.GetSuggestionIdsResponse, error) {
+	userId := request.GetId()
+	usernames, err := handler.service.GetSuggestionIdsFor(userId)
+	if err != nil {
+		return nil, err
+	}
+	response := &pb.GetSuggestionIdsResponse{
+		Usernames: []string{},
+	}
+
+	for _, username := range usernames {
+		response.Usernames = append(response.Usernames, username)
+	}
+
+	return response, nil
+}
+
 func (handler *ConnectionHandler) GetRequestsUsernamesFor(ctx context.Context, request *pb.GetConnectionsUsernamesRequest) (*pb.GetConnectionsUsernamesResponse, error) {
 	userId := request.GetId()
 	usernames, err := handler.service.GetRequestsUsernamesFor(userId)
