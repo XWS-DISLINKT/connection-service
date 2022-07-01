@@ -281,3 +281,31 @@ func (service *ConnectionService) BlockUser(requestSenderId string, blockedUserI
 	})
 	return successful.(bool), err
 }
+
+func (service *ConnectionService) GetBlockedConnectionsUsernames(userId string) ([]string, error) {
+	session := service.databaseDriver.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close()
+	connections, err := session.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		records, err := transaction.Run(
+			"match(u1:User) "+
+				"match(u2:User) "+
+				"match((u1)-[c1:CONNECTS]->(u2)) "+
+				"where u1.id = $userId and c1.isBlocked "+
+				"return distinct u2.id",
+			map[string]interface{}{"userId": userId})
+
+		users := Users{users: []string{}}
+		if records == nil {
+			return Users{users: []string{}}, nil
+		}
+
+		for records.Next() {
+			record := records.Record()
+			userId, _ := record.Get("u2.id")
+			users.users = append(users.users, userId.(string))
+		}
+		return users, err
+	})
+
+	return connections.(Users).users, err
+}

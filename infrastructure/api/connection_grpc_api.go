@@ -99,6 +99,23 @@ func (handler *ConnectionHandler) GetConnectionsUsernamesFor(ctx context.Context
 	return response, nil
 }
 
+func (handler *ConnectionHandler) GetBlockedConnectionsUsernames(ctx context.Context, request *pb.GetConnectionsUsernamesRequest) (*pb.GetConnectionsUsernamesResponse, error) {
+	userId := request.GetId()
+	usernames, err := handler.service.GetBlockedConnectionsUsernames(userId)
+	if err != nil {
+		return nil, err
+	}
+	response := &pb.GetConnectionsUsernamesResponse{
+		Usernames: []string{},
+	}
+
+	for _, username := range usernames {
+		response.Usernames = append(response.Usernames, username)
+	}
+
+	return response, nil
+}
+
 func (handler *ConnectionHandler) GetSuggestionIdsFor(ctx context.Context, request *pb.GetSuggestionIdsRequest) (*pb.GetSuggestionIdsResponse, error) {
 	userId := request.GetId()
 	usernames, err := handler.service.GetSuggestionIdsFor(userId)
