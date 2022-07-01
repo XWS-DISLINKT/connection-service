@@ -67,6 +67,21 @@ func (handler *ConnectionHandler) ApproveConnectionRequest(ctx context.Context, 
 	return response, nil
 }
 
+func (handler *ConnectionHandler) BlockConnection(ctx context.Context, request *pb.ConnectionBody) (*pb.ConnectionResponse, error) {
+	requestSenderId := request.GetRequestSenderId()
+	blockedUserId := request.GetRequestReceiverId()
+	success, err := handler.service.BlockUser(requestSenderId, blockedUserId)
+	response := &pb.ConnectionResponse{
+		Success: success,
+	}
+
+	if err != nil {
+		return response, err
+	}
+
+	return response, nil
+}
+
 func (handler *ConnectionHandler) GetConnectionsUsernamesFor(ctx context.Context, request *pb.GetConnectionsUsernamesRequest) (*pb.GetConnectionsUsernamesResponse, error) {
 	userId := request.GetId()
 	usernames, err := handler.service.GetConnectionsUsernamesFor(userId)

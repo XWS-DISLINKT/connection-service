@@ -94,6 +94,8 @@ func (service *ConnectionService) MakeConnectionWithPublicProfile(requestSenderI
 			"match(u1:User{id: $requestSenderId}) match(u2:User{id: $requestReceiverId})"+
 				" create (u1)-[c1:CONNECTS{isApproved: true}]->(u2)"+
 				" create (u1)<-[c2:CONNECTS{isApproved: true}]-(u2)"+
+				" create (u1)-[c3:CONNECTS{isBlocked: false}]->(u2)"+
+				" create (u1)<-[c4:CONNECTS{isBlocked: false}]-(u2)"+
 				" return c1 is not null",
 			map[string]interface{}{"requestSenderId": requestSenderId, "requestReceiverId": requestReceiverId})
 		if err != nil {
@@ -123,7 +125,10 @@ func (service *ConnectionService) MakeConnectionRequest(requestSenderId string, 
 		result, err := transaction.Run(
 			"match(u1:User{id: $requestSenderId}) match(u2:User{id: $requestReceiverId})"+
 				" create (u1)-[c1:CONNECTS{isApproved: false}]->(u2)"+
-				" create (u1)<-[c2:CONNECTS{isApproved: false}]-(u2) return c1 is not null",
+				" create (u1)<-[c2:CONNECTS{isApproved: false}]-(u2)"+
+				" create (u1)-[c3:CONNECTS{isBlocked: false}]->(u2)"+
+				" create (u1)<-[c4:CONNECTS{isBlocked: false}]-(u2)"+
+				" return c1 is not null",
 			map[string]interface{}{"requestSenderId": requestSenderId, "requestReceiverId": requestReceiverId})
 		if err != nil {
 			return nil, err
@@ -176,8 +181,9 @@ func (service *ConnectionService) GetConnectionsUsernamesFor(userId string) ([]s
 		records, err := transaction.Run(
 			"match(u1:User) "+
 				"match(u2:User) "+
-				"match((u1)-[c:CONNECTS]->(u2)) "+
-				"where u1.id = $userId and c.isApproved "+
+				"match((u1)-[c1:CONNECTS]->(u2)) "+
+				"match((u1)-[c2:CONNECTS]->(u2)) "+
+				"where u1.id = $userId and c1.isApproved and not c2.isBlocked "+
 				"return u2.id",
 			map[string]interface{}{"userId": userId})
 
@@ -204,8 +210,9 @@ func (service *ConnectionService) GetRequestsUsernamesFor(userId string) ([]stri
 		records, err := transaction.Run(
 			"match(u1:User) "+
 				"match(u2:User) "+
-				"match((u1)-[c:CONNECTS]->(u2)) "+
-				"where u1.id = $userId and not c.isApproved "+
+				"match((u1)-[c1:CONNECTS]->(u2)) "+
+				"match((u1)-[c2:CONNECTS]->(u2)) "+
+				"where u1.id = $userId and not c1.isApproved and not c2.isBlocked "+
 				"return u2.id",
 			map[string]interface{}{"userId": userId})
 
@@ -243,4 +250,34 @@ func (service *ConnectionService) canMakeConnection(requestSenderId string, requ
 		return false, result.Err()
 	})
 	return success.(bool), err
+}
+
+func (service *ConnectionService) BlockUser(requestSenderId string, blockedUserId string) (bool, error) {
+	session := service.databaseDriver.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close()
+	successful, err := session.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		result, err := transaction.Run(
+			"match(u1:User) "+
+				"match(u2:User)"+
+				"match((u1)-[c1:CONNECTS]->(u2)) "+
+				"match((u2)-[c2:CONNECTS]->(u1)) "+
+				"match((u1)-[c3:CONNECTS]->(u2)) "+
+				"match((u2)-[c4:CONNECTS]->(u1)) "+
+				"where u1.id = $requestSenderId and u2.id = $blockedUserId "+
+				"set c1.isApproved = false "+
+				"set c2.isApproved = false "+
+				"set c3.isBlocked = true "+
+				"set c4.isBlocked = true "+
+				"return c1 is not null",
+			map[string]interface{}{"requestSenderId": requestSenderId, "blockedUserId": blockedUserId})
+		if err != nil {
+			return nil, err
+		}
+		if result.Next() {
+			return result.Record().Values[0], nil
+		}
+
+		return false, result.Err()
+	})
+	return successful.(bool), err
 }
