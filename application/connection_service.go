@@ -56,6 +56,26 @@ func (service *ConnectionService) InsertUser(user *domain.User) (bool, error) {
 	return successful.(bool), err
 }
 
+func (service *ConnectionService) UpdateUser(user *domain.User) (bool, error) {
+	session := service.databaseDriver.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
+	defer session.Close()
+	successful, err := session.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		result, err := transaction.Run(
+			"match (user:User {id: $id}) set user.isPrivate = $isPrivate return user is not null",
+			map[string]interface{}{"id": user.Id, "isPrivate": user.IsPrivate})
+		if err != nil {
+			return nil, err
+		}
+
+		if result.Next() {
+			return result.Record().Values[0], nil
+		}
+
+		return nil, result.Err()
+	})
+	return successful.(bool), err
+}
+
 func (service *ConnectionService) GetSuggestionIdsFor(userId string) ([]string, error) {
 	session := service.databaseDriver.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeRead})
 	defer session.Close()

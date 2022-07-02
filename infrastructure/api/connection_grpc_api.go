@@ -25,6 +25,13 @@ func (handler *ConnectionHandler) InsertUser(ctx context.Context, request *pb.Us
 	return response, err
 }
 
+func (handler *ConnectionHandler) UpdateUser(ctx context.Context, request *pb.User) (*pb.Status, error) {
+	user := domain.User{Id: request.UserId, IsPrivate: request.IsPrivate}
+	success, err := handler.service.UpdateUser(&user)
+	response := &pb.Status{Success: success}
+	return response, err
+}
+
 func (handler *ConnectionHandler) MakeConnectionWithPublicProfile(ctx context.Context, request *pb.ConnectionBody) (*pb.ConnectionResponse, error) {
 	requestSenderId := request.GetRequestSenderId()
 	requestReceiverId := request.GetRequestReceiverId()
