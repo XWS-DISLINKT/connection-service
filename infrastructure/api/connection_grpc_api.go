@@ -3,9 +3,12 @@ package api
 import (
 	"connection-service/application"
 	"connection-service/domain"
+	"connection-service/infrastructure/services"
+	"connection-service/startup/config"
 	"context"
 	"fmt"
 	pb "github.com/XWS-DISLINKT/dislinkt/common/proto/connection-service"
+	profile "github.com/XWS-DISLINKT/dislinkt/common/proto/profile-service"
 )
 
 type ConnectionHandler struct {
@@ -39,6 +42,15 @@ func (handler *ConnectionHandler) MakeConnectionWithPublicProfile(ctx context.Co
 	response := &pb.ConnectionResponse{
 		Success: success,
 	}
+
+	//kreiranje notifikacije
+	cfg := config.NewConfig()
+	profileAddress := fmt.Sprintf(cfg.ProfileServiceHost + ":" + cfg.ProfileServicePort)
+	profileResponse, _ := services.ProfilesClient(profileAddress).SendNotification(context.TODO(),
+		&profile.NewNotificationRequest{SenderId: requestSenderId, ReceiverId: requestReceiverId, NotificationType: "connection"})
+
+	fmt.Printf("\ncreated notification {%s}", profileResponse.Id)
+
 	if err != nil {
 		return response, err
 	}
@@ -56,6 +68,14 @@ func (handler *ConnectionHandler) MakeConnectionRequest(ctx context.Context, req
 	if err != nil {
 		return response, err
 	}
+
+	//kreiranje notifikacije
+	cfg := config.NewConfig()
+	profileAddress := fmt.Sprintf(cfg.ProfileServiceHost + ":" + cfg.ProfileServicePort)
+	profileResponse, _ := services.ProfilesClient(profileAddress).SendNotification(context.TODO(),
+		&profile.NewNotificationRequest{SenderId: requestSenderId, ReceiverId: requestReceiverId, NotificationType: "request"})
+
+	fmt.Printf("\ncreated notification {%s}", profileResponse.Id)
 
 	return response, nil
 }
