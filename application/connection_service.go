@@ -204,7 +204,7 @@ func (service *ConnectionService) GetConnectionsUsernamesFor(userId string) ([]s
 				"match((u1)-[c1:CONNECTS]->(u2)) "+
 				"match((u1)-[c2:CONNECTS]->(u2)) "+
 				"where u1.id = $userId and c1.isApproved and not c2.isBlocked "+
-				"return u2.id",
+				"return distinct u2.id",
 			map[string]interface{}{"userId": userId})
 
 		users := Users{users: []string{}}
