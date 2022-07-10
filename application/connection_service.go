@@ -3,6 +3,7 @@ package application
 import (
 	"connection-service/domain"
 	"connection-service/infrastructure/persistence"
+	"errors"
 	"github.com/neo4j/neo4j-go-driver/v4/neo4j"
 )
 
@@ -39,6 +40,35 @@ func (service *ConnectionService) DeleteEverything() error {
 func (service *ConnectionService) InsertUser(user *domain.User) (bool, error) {
 	session := service.databaseDriver.NewSession(neo4j.SessionConfig{AccessMode: neo4j.AccessModeWrite})
 	defer session.Close()
+
+	exists, err := session.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
+		result, err := transaction.Run(
+			"match (user:User {id: $id}) return user",
+			map[string]interface{}{"id": user.Id})
+
+		if err != nil {
+			return nil, err
+		}
+
+		if result.Next() {
+			return true, nil
+		}
+
+		return false, nil
+	})
+
+	if err != nil {
+		return false, err
+	}
+
+	if exists == nil {
+		return false, errors.New("Error.")
+	}
+
+	if exists.(bool) {
+		return false, errors.New("User exists.")
+	}
+
 	successful, err := session.WriteTransaction(func(transaction neo4j.Transaction) (interface{}, error) {
 		result, err := transaction.Run(
 			"create (usr:User {id: $id, isPrivate: $isPrivate}) return usr is not null",
@@ -73,6 +103,11 @@ func (service *ConnectionService) UpdateUser(user *domain.User) (bool, error) {
 
 		return nil, result.Err()
 	})
+
+	if successful == nil {
+		return false, errors.New("Error.")
+	}
+
 	return successful.(bool), err
 }
 
